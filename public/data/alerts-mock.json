@@ -1,0 +1,115 @@
+[
+  {
+    "id": "alert-1",
+    "type": "Tropical Cyclone",
+    "severity": "severe",
+    "title": "Cyclone DANA — Warning #12",
+    "description": "Tropical cyclone DANA (Cat 2) tracking northwest across Bay of Bengal. Landfall expected near Odisha coast within 24 hours. Wind speeds 90-110 km/h. Storm surge 1.5-2.5m expected.",
+    "source": "IMD",
+    "effectiveTime": "2025-10-24T06:00:00Z",
+    "expiryTime": "2025-10-26T18:00:00Z",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[84.5, 19.0], [87.5, 19.0], [87.5, 22.0], [84.5, 22.0], [84.5, 19.0]]]
+    },
+    "properties": {
+      "windSpeed": "90-110 km/h",
+      "category": "2",
+      "stormSurge": "1.5-2.5m"
+    }
+  },
+  {
+    "id": "alert-2",
+    "type": "Flood Warning",
+    "severity": "moderate",
+    "title": "Brahmaputra River — Flood Alert",
+    "description": "Water levels in Brahmaputra at Guwahati crossing danger mark. Moderate flooding expected in low-lying areas of Kamrup district for next 48 hours.",
+    "source": "CWC India",
+    "effectiveTime": "2025-10-20T00:00:00Z",
+    "expiryTime": "2025-10-23T00:00:00Z",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[91.0, 26.0], [92.2, 26.0], [92.2, 26.8], [91.0, 26.8], [91.0, 26.0]]]
+    },
+    "properties": {
+      "waterLevel": "49.5m (danger: 49.0m)",
+      "affectedDistricts": "Kamrup, Nalbari"
+    }
+  },
+  {
+    "id": "alert-3",
+    "type": "Tsunami Advisory",
+    "severity": "critical",
+    "title": "Tsunami Watch — Eastern Indian Ocean",
+    "description": "M7.2 earthquake detected off Sumatra coast. Tsunami advisory issued for eastern Indian Ocean coastlines. Estimated wave arrival in 2-4 hours for Andaman & Nicobar.",
+    "source": "INCOIS",
+    "effectiveTime": "2025-11-01T14:30:00Z",
+    "expiryTime": "2025-11-01T23:00:00Z",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[92.0, 6.0], [95.0, 6.0], [95.0, 14.0], [92.0, 14.0], [92.0, 6.0]]]
+    },
+    "properties": {
+      "magnitude": "7.2",
+      "estimatedArrival": "2-4 hours",
+      "waveHeight": "0.3-1.0m"
+    }
+  },
+  {
+    "id": "alert-4",
+    "type": "Air Quality",
+    "severity": "moderate",
+    "title": "Delhi NCR — Severe AQI Alert",
+    "description": "Air quality index exceeding 400 (Severe+) across Delhi-NCR. PM2.5 levels critically high. GRAP Stage-IV restrictions in effect.",
+    "source": "CPCB",
+    "effectiveTime": "2025-11-10T00:00:00Z",
+    "expiryTime": "2025-11-14T00:00:00Z",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[76.8, 28.3], [77.5, 28.3], [77.5, 28.9], [76.8, 28.9], [76.8, 28.3]]]
+    },
+    "properties": {
+      "aqi": "400+",
+      "primaryPollutant": "PM2.5",
+      "restrictions": "GRAP Stage-IV"
+    }
+  },
+  {
+    "id": "alert-5",
+    "type": "Wildfire",
+    "severity": "severe",
+    "title": "Uttarakhand Forest Fire Alert",
+    "description": "Multiple active fire incidents detected in Uttarakhand forests. FIRMS satellite data shows 47 hotspots in Kumaon and Garhwal divisions. Fire danger rating: Extreme.",
+    "source": "FSI India",
+    "effectiveTime": "2025-04-15T00:00:00Z",
+    "expiryTime": "2025-04-20T00:00:00Z",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[78.5, 29.5], [80.5, 29.5], [80.5, 31.0], [78.5, 31.0], [78.5, 29.5]]]
+    },
+    "properties": {
+      "hotspots": 47,
+      "fireDanger": "Extreme",
+      "affectedArea": "Kumaon, Garhwal"
+    }
+  },
+  {
+    "id": "alert-6",
+    "type": "Earthquake",
+    "severity": "moderate",
+    "title": "M5.8 Earthquake — Hindu Kush Region",
+    "description": "Moderate earthquake (M5.8) at 180km depth in Hindu Kush region, Afghanistan. Felt across northern Pakistan and J&K. No tsunami threat.",
+    "source": "USGS",
+    "effectiveTime": "2025-09-05T03:22:00Z",
+    "expiryTime": "2025-09-06T03:22:00Z",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[69.5, 35.5], [71.5, 35.5], [71.5, 37.5], [69.5, 37.5], [69.5, 35.5]]]
+    },
+    "properties": {
+      "magnitude": "5.8",
+      "depth": "180km",
+      "tsunamiThreat": "None"
+    }
+  }
+]

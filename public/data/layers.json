@@ -1,0 +1,34 @@
+[
+  {
+    "id": "L1",
+    "name": "Spatial Base",
+    "level": 1,
+    "description": "Foundational geographic and boundary layers — topography, bathymetry, administrative boundaries, coastlines, EEZs, and built infrastructure.",
+    "color": "#6366f1",
+    "icon": "Globe"
+  },
+  {
+    "id": "L2",
+    "name": "Meteorology & Climate",
+    "level": 2,
+    "description": "Atmospheric variables — temperature, precipitation, wind, pressure, cloud cover, reanalysis products, and seasonal forecasts.",
+    "color": "#f59e0b",
+    "icon": "CloudSun"
+  },
+  {
+    "id": "L3",
+    "name": "Hydrology & Water",
+    "level": 3,
+    "description": "Surface and subsurface water systems — river basins, discharge, groundwater, flood extents, reservoirs, and water quality.",
+    "color": "#3b82f6",
+    "icon": "Droplets"
+  },
+  {
+    "id": "L4",
+    "name": "Environment & Hazards",
+    "level": 4,
+    "description": "Land cover, vegetation indices, air quality, seismicity, volcanic activity, wildfire risk, and environmental change indicators.",
+    "color": "#22c55e",
+    "icon": "TreePine"
+  }
+]

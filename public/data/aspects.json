@@ -1,0 +1,14 @@
+[
+  { "id": "asp-country", "name": "Country", "type": "administrative", "description": "National administrative boundaries" },
+  { "id": "asp-state", "name": "State / Province", "type": "administrative", "description": "Sub-national administrative divisions" },
+  { "id": "asp-eez", "name": "Exclusive Economic Zone", "type": "maritime", "description": "Maritime EEZ boundaries per UNCLOS" },
+  { "id": "asp-basin", "name": "River Basin", "type": "hydrological", "description": "Major hydrological basins and sub-basins" },
+  { "id": "asp-coastline", "name": "Coastline", "type": "physical", "description": "Global coastline vectors" },
+  { "id": "asp-cyclone-poly", "name": "Cyclone Warning Polygon", "type": "hazard", "description": "Tropical cyclone warning/watch zones" },
+  { "id": "asp-flood-zone", "name": "Flood Zone", "type": "hazard", "description": "Flood risk and inundation extent zones" },
+  { "id": "asp-seismic", "name": "Seismic Zone", "type": "hazard", "description": "Earthquake hazard zonation" },
+  { "id": "asp-aq-zone", "name": "Air Quality Zone", "type": "environment", "description": "Air quality monitoring and reporting zones" },
+  { "id": "asp-landcover", "name": "Land Cover Class", "type": "environment", "description": "Global land cover classification regions" },
+  { "id": "asp-bathymetry", "name": "Bathymetric Zone", "type": "physical", "description": "Ocean depth zones and contour regions" },
+  { "id": "asp-volcano", "name": "Volcanic Zone", "type": "hazard", "description": "Volcanic activity monitoring zones" }
+]

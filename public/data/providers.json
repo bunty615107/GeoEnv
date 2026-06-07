@@ -1,0 +1,14 @@
+[
+  { "id": "prov-noaa", "name": "NOAA", "fullName": "National Oceanic and Atmospheric Administration", "country": "USA", "url": "https://www.noaa.gov", "category": "government" },
+  { "id": "prov-ecmwf", "name": "ECMWF", "fullName": "European Centre for Medium-Range Weather Forecasts", "country": "International", "url": "https://www.ecmwf.int", "category": "intergovernmental" },
+  { "id": "prov-esa", "name": "ESA", "fullName": "European Space Agency", "country": "International", "url": "https://www.esa.int", "category": "space-agency" },
+  { "id": "prov-nasa", "name": "NASA", "fullName": "National Aeronautics and Space Administration", "country": "USA", "url": "https://www.nasa.gov", "category": "space-agency" },
+  { "id": "prov-imd", "name": "IMD", "fullName": "India Meteorological Department", "country": "India", "url": "https://mausam.imd.gov.in", "category": "government" },
+  { "id": "prov-copernicus", "name": "Copernicus", "fullName": "Copernicus Programme (EU)", "country": "EU", "url": "https://www.copernicus.eu", "category": "intergovernmental" },
+  { "id": "prov-usgs", "name": "USGS", "fullName": "United States Geological Survey", "country": "USA", "url": "https://www.usgs.gov", "category": "government" },
+  { "id": "prov-gebco", "name": "GEBCO", "fullName": "General Bathymetric Chart of the Oceans", "country": "International", "url": "https://www.gebco.net", "category": "intergovernmental" },
+  { "id": "prov-wwf", "name": "WWF", "fullName": "World Wildlife Fund", "country": "International", "url": "https://www.worldwildlife.org", "category": "ngo" },
+  { "id": "prov-grdc", "name": "GRDC", "fullName": "Global Runoff Data Centre", "country": "International", "url": "https://www.bafg.de/GRDC", "category": "intergovernmental" },
+  { "id": "prov-jaxa", "name": "JAXA", "fullName": "Japan Aerospace Exploration Agency", "country": "Japan", "url": "https://global.jaxa.jp", "category": "space-agency" },
+  { "id": "prov-cds", "name": "CDS", "fullName": "Climate Data Store (Copernicus)", "country": "EU", "url": "https://cds.climate.copernicus.eu", "category": "intergovernmental" }
+]

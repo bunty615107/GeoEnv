@@ -1,0 +1,54 @@
+{
+  "summaryTemplate": {
+    "totalArea": 0,
+    "perimeterKm": 0,
+    "overlappingDatasets": [],
+    "activeLayers": [],
+    "layerBreakdown": {
+      "L1": 0,
+      "L2": 0,
+      "L3": 0,
+      "L4": 0
+    },
+    "riskIndicators": {
+      "floodRisk": "low",
+      "seismicRisk": "low",
+      "airQuality": "good",
+      "vegetationHealth": "normal"
+    }
+  },
+  "mockResults": [
+    {
+      "id": "result-coastal-odisha",
+      "aoiName": "Coastal Odisha",
+      "totalAreaSqKm": 12450,
+      "perimeterKm": 520,
+      "overlappingDatasets": ["ds-gebco-2023", "ds-era5", "ds-glofas", "ds-worldcover", "ds-firms"],
+      "activeLayers": ["L1", "L2", "L3", "L4"],
+      "layerBreakdown": { "L1": 3, "L2": 2, "L3": 2, "L4": 2 },
+      "riskIndicators": {
+        "floodRisk": "high",
+        "seismicRisk": "moderate",
+        "airQuality": "moderate",
+        "vegetationHealth": "good"
+      },
+      "insight": "This coastal AOI has high flood risk due to proximity to Mahanadi delta and active cyclone tracks. 5 datasets provide direct coverage."
+    },
+    {
+      "id": "result-delhi-ncr",
+      "aoiName": "Delhi NCR",
+      "totalAreaSqKm": 1484,
+      "perimeterKm": 180,
+      "overlappingDatasets": ["ds-era5", "ds-cams-aq", "ds-worldcover", "ds-ndvi-modis"],
+      "activeLayers": ["L2", "L4"],
+      "layerBreakdown": { "L1": 1, "L2": 2, "L3": 0, "L4": 3 },
+      "riskIndicators": {
+        "floodRisk": "low",
+        "seismicRisk": "high",
+        "airQuality": "severe",
+        "vegetationHealth": "poor"
+      },
+      "insight": "Critical air quality concerns. Seismic Zone IV. 4 datasets provide direct coverage with CAMS providing real-time AQI data."
+    }
+  ]
+}
