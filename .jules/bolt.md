@@ -1,0 +1,3 @@
+## 2024-06-09 - React Context Antipattern: O(n) Helpers
+**Learning:** Exposing helper functions like `getLayer(id)` or `getProvider(id)` via React Context that use `Array.find()` internally creates an invisible O(n) bottleneck. When a list view (like the Catalog grid) iterates over `n` items and calls this helper for each item, the overall render cost becomes O(n²).
+**Action:** Always pre-compute O(1) Hash Maps (using `useMemo` or plain JS `Map`) for lookup helpers exposed via Context to ensure predictable O(1) reads during large array maps or grid renders. Additionally, always memoize the Context Provider's value to prevent unnecessary consumer re-renders.
