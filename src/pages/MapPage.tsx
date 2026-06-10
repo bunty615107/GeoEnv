@@ -68,7 +68,7 @@ export default function MapPage() {
 
     if (!showAlerts || alerts.length === 0) return;
 
-    const geojson: GeoJSON.FeatureCollection = {
+    const geojson: import('geojson').FeatureCollection = {
       type: 'FeatureCollection',
       features: alerts.map((a) => ({
         type: 'Feature',

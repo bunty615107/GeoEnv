@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react';
 import type { Layer, Aspect, Dataset, Provider, CatalogFilters } from '../types';
 import { loadLayers, loadAspects, loadDatasets, loadProviders } from '../lib/data';
 
@@ -48,35 +48,55 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const setFilters = (partial: Partial<CatalogFilters>) => {
+  const setFilters = useCallback((partial: Partial<CatalogFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
-  };
-  const resetFilters = () => setFiltersState(defaultFilters);
+  }, []);
 
-  const filteredDatasets = datasets.filter((ds) => {
-    if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
-    if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
-    if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase();
-      const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-    return true;
-  });
+  const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
-  const getLayer = (id: string) => layers.find((l) => l.id === id);
-  const getProvider = (id: string) => providers.find((p) => p.id === id);
+  const filteredDatasets = useMemo(() => {
+    const q = filters.searchQuery ? filters.searchQuery.toLowerCase() : '';
+    return datasets.filter((ds) => {
+      if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
+      if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
+      if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
+      if (q) {
+        const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [datasets, filters]);
+
+  const getLayer = useCallback((id: string) => layers.find((l) => l.id === id), [layers]);
+  const getProvider = useCallback((id: string) => providers.find((p) => p.id === id), [providers]);
+
+  const value = useMemo(
+    () => ({
+      layers,
+      aspects,
+      datasets,
+      providers,
+      filters,
+      filteredDatasets,
+      loading,
+      error,
+      setFilters,
+      resetFilters,
+      getLayer,
+      getProvider,
+    }),
+    [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]
+  );
 
   return (
-    <CatalogContext.Provider
-      value={{ layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider }}
-    >
+    <CatalogContext.Provider value={value}>
       {children}
     </CatalogContext.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCatalog() {
   const ctx = useContext(CatalogContext);
   if (!ctx) throw new Error('useCatalog must be used within CatalogProvider');
