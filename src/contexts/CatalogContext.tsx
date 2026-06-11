@@ -77,6 +77,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCatalog() {
   const ctx = useContext(CatalogContext);
   if (!ctx) throw new Error('useCatalog must be used within CatalogProvider');
