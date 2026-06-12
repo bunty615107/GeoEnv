@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
 import type { Layer, Aspect, Dataset, Provider, CatalogFilters } from '../types';
 import { loadLayers, loadAspects, loadDatasets, loadProviders } from '../lib/data';
 
@@ -53,17 +53,19 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   };
   const resetFilters = () => setFiltersState(defaultFilters);
 
-  const filteredDatasets = datasets.filter((ds) => {
-    if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
-    if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
-    if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase();
-      const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-    return true;
-  });
+  const filteredDatasets = useMemo(() => {
+    return datasets.filter((ds) => {
+      if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
+      if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
+      if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [datasets, filters]);
 
   const getLayer = (id: string) => layers.find((l) => l.id === id);
   const getProvider = (id: string) => providers.find((p) => p.id === id);
@@ -77,6 +79,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCatalog() {
   const ctx = useContext(CatalogContext);
   if (!ctx) throw new Error('useCatalog must be used within CatalogProvider');
