@@ -52,7 +52,7 @@ export default function MapPage() {
     loadAlerts().then(setAlerts).catch(console.error);
   }, []);
 
-  // Render alert polygons
+  // Initialize alert polygons source and layers once
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -61,75 +61,110 @@ export default function MapPage() {
     const layerId = 'alerts-fill';
     const outlineId = 'alerts-outline';
 
-    // Remove existing
-    if (map.getLayer(layerId)) map.removeLayer(layerId);
-    if (map.getLayer(outlineId)) map.removeLayer(outlineId);
-    if (map.getSource(sourceId)) map.removeSource(sourceId);
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
 
-    if (!showAlerts || alerts.length === 0) return;
+      map.addLayer({
+        id: layerId,
+        type: 'fill',
+        source: sourceId,
+        layout: { visibility: 'none' },
+        paint: {
+          'fill-color': [
+            'match', ['get', 'severity'],
+            'critical', '#ef4444',
+            'severe', '#f97316',
+            'moderate', '#f59e0b',
+            '#3b82f6',
+          ],
+          'fill-opacity': 0.2,
+        },
+      });
 
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: alerts.map((a) => ({
-        type: 'Feature',
-        geometry: a.geometry,
-        properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
-      })),
-    };
+      map.addLayer({
+        id: outlineId,
+        type: 'line',
+        source: sourceId,
+        layout: { visibility: 'none' },
+        paint: {
+          'line-color': [
+            'match', ['get', 'severity'],
+            'critical', '#ef4444',
+            'severe', '#f97316',
+            'moderate', '#f59e0b',
+            '#3b82f6',
+          ],
+          'line-width': 2,
+        },
+      });
 
-    map.addSource(sourceId, { type: 'geojson', data: geojson });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const clickHandler = (e: any) => {
+        if (e.features && e.features[0]) {
+          const props = e.features[0].properties;
+          new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div style="font-family: Inter, sans-serif;">
+                <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${props?.title ?? 'Alert'}</div>
+                <div style="font-size:11px;color:#64748b;">Type: ${props?.type ?? '—'}</div>
+                <div style="font-size:11px;color:#64748b;">Severity: ${props?.severity ?? '—'}</div>
+              </div>
+            `)
+            .addTo(map);
+        }
+      };
 
-    map.addLayer({
-      id: layerId,
-      type: 'fill',
-      source: sourceId,
-      paint: {
-        'fill-color': [
-          'match', ['get', 'severity'],
-          'critical', '#ef4444',
-          'severe', '#f97316',
-          'moderate', '#f59e0b',
-          '#3b82f6',
-        ],
-        'fill-opacity': 0.2,
-      },
-    });
+      const mouseEnterHandler = () => { map.getCanvas().style.cursor = 'pointer'; };
+      const mouseLeaveHandler = () => { map.getCanvas().style.cursor = ''; };
 
-    map.addLayer({
-      id: outlineId,
-      type: 'line',
-      source: sourceId,
-      paint: {
-        'line-color': [
-          'match', ['get', 'severity'],
-          'critical', '#ef4444',
-          'severe', '#f97316',
-          'moderate', '#f59e0b',
-          '#3b82f6',
-        ],
-        'line-width': 2,
-      },
-    });
+      // Click handler
+      map.on('click', layerId, clickHandler);
+      map.on('mouseenter', layerId, mouseEnterHandler);
+      map.on('mouseleave', layerId, mouseLeaveHandler);
 
-    // Click handler
-    map.on('click', layerId, (e) => {
-      if (e.features && e.features[0]) {
-        const props = e.features[0].properties;
-        new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <div style="font-family: Inter, sans-serif;">
-              <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${props?.title ?? 'Alert'}</div>
-              <div style="font-size:11px;color:#64748b;">Type: ${props?.type ?? '—'}</div>
-              <div style="font-size:11px;color:#64748b;">Severity: ${props?.severity ?? '—'}</div>
-            </div>
-          `)
-          .addTo(map);
-      }
-    });
+      // We do not return cleanup function here to remove layer and source
+      // because they are needed for the lifetime of the map
+      // but we should remove event listeners when component unmounts
+      // However the map instance is shared and will be destroyed anyway
+      // So no strict cleanup of layers/sources is needed here.
+    }
+  }, [mapReady]);
 
-    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+  // Update alert polygons data dynamically
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    const sourceId = 'alerts-source';
+    const layerId = 'alerts-fill';
+    const outlineId = 'alerts-outline';
+
+    const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+    if (!source) return;
+
+    // Toggle visibility
+    const visibility = showAlerts && alerts.length > 0 ? 'visible' : 'none';
+    if (map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', visibility);
+    if (map.getLayer(outlineId)) map.setLayoutProperty(outlineId, 'visibility', visibility);
+
+    if (showAlerts && alerts.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const geojson: any = {
+        type: 'FeatureCollection',
+        features: alerts.map((a) => ({
+          type: 'Feature' as const,
+          geometry: a.geometry,
+          properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
+        })),
+      };
+
+      // Update data without rebuilding layer
+      source.setData(geojson);
+    }
   }, [showAlerts, alerts, mapReady]);
 
   const activeDatasets = activeLayers.map((l) => ({
