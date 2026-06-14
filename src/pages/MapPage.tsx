@@ -61,21 +61,23 @@ export default function MapPage() {
     const layerId = 'alerts-fill';
     const outlineId = 'alerts-outline';
 
-    // Remove existing
-    if (map.getLayer(layerId)) map.removeLayer(layerId);
-    if (map.getLayer(outlineId)) map.removeLayer(outlineId);
-    if (map.getSource(sourceId)) map.removeSource(sourceId);
-
-    if (!showAlerts || alerts.length === 0) return;
-
-    const geojson: GeoJSON.FeatureCollection = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const geojson: any = {
       type: 'FeatureCollection',
-      features: alerts.map((a) => ({
+      features: (!showAlerts || alerts.length === 0) ? [] : alerts.map((a) => ({
         type: 'Feature',
         geometry: a.geometry,
         properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
       })),
     };
+
+    const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+
+    // Use setData instead of tear-down/rebuild to prevent WebGL thrashing and listener leaks
+    if (source) {
+      source.setData(geojson);
+      return;
+    }
 
     map.addSource(sourceId, { type: 'geojson', data: geojson });
 
