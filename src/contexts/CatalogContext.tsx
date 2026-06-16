@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react';
 import type { Layer, Aspect, Dataset, Provider, CatalogFilters } from '../types';
 import { loadLayers, loadAspects, loadDatasets, loadProviders } from '../lib/data';
 
@@ -48,12 +48,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const setFilters = (partial: Partial<CatalogFilters>) => {
+  const setFilters = useCallback((partial: Partial<CatalogFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
-  };
-  const resetFilters = () => setFiltersState(defaultFilters);
+  }, []);
+  const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
-  const filteredDatasets = datasets.filter((ds) => {
+  const filteredDatasets = useMemo(() => datasets.filter((ds) => {
     if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
     if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
     if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
@@ -63,10 +63,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       if (!haystack.includes(q)) return false;
     }
     return true;
-  });
+  }), [datasets, filters]);
 
-  const getLayer = (id: string) => layers.find((l) => l.id === id);
-  const getProvider = (id: string) => providers.find((p) => p.id === id);
+  const layerMap = useMemo(() => new Map(layers.map(l => [l.id, l])), [layers]);
+  const providerMap = useMemo(() => new Map(providers.map(p => [p.id, p])), [providers]);
+
+  const getLayer = useCallback((id: string) => layerMap.get(id), [layerMap]);
+  const getProvider = useCallback((id: string) => providerMap.get(id), [providerMap]);
 
   return (
     <CatalogContext.Provider
