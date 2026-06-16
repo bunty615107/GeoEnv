@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { Eye, EyeOff, Trash2, Layers, AlertTriangle, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useMap } from '../contexts/MapContext';
@@ -61,12 +60,11 @@ export default function MapPage() {
     const layerId = 'alerts-fill';
     const outlineId = 'alerts-outline';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const geojson: any = {
-      type: 'FeatureCollection',
+    const geojson = {
+      type: 'FeatureCollection' as const,
       features: (!showAlerts || alerts.length === 0) ? [] : alerts.map((a) => ({
-        type: 'Feature',
-        geometry: a.geometry,
+        type: 'Feature' as const,
+        geometry: { type: a.geometry.type, coordinates: a.geometry.coordinates },
         properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
       })),
     };
