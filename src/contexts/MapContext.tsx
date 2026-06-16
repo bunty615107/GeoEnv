@@ -55,6 +55,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useMap() {
   const ctx = useContext(MapContext);
   if (!ctx) throw new Error('useMap must be used within MapProvider');
