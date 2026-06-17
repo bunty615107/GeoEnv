@@ -4,3 +4,6 @@
 ## 2024-05-19 - MapLibre source updates instead of replacement
 **Learning:** Tearing down and re-adding MapLibre sources and layers (via `removeLayer`/`addLayer`/`removeSource`) in React `useEffect` hooks causes significant WebGL thrashing and potential event listener memory leaks, especially when toggling visibility or updating data frequently.
 **Action:** When updating MapLibre data in React, maintain the source and layers, and exclusively use `source.setData()` with the new GeoJSON data. If visibility needs to be toggled off via data, set the source data to an empty FeatureCollection (`{ type: 'FeatureCollection', features: [] }`).
+## 2024-06-17 - React 19 State Synchronization
+**Learning:** Synchronizing external state (like a context value or prop) with internal state using `useEffect` causes cascading re-renders and violates React's best practices, leading to performance bottlenecks.
+**Action:** If state needs to be derived from props or context, either compute it directly during render without storing it in state, or use a pattern to track the previous prop value and update state synchronously during the render phase to avoid cascading updates.

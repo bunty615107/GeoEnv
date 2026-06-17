@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import type { MapLayerState } from '../types';
 
 interface MapState {
@@ -20,42 +20,43 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const [showAlerts, setShowAlerts] = useState(false);
 
-  const addLayer = (datasetId: string) => {
+  const addLayer = useCallback((datasetId: string) => {
     setActiveLayers((prev) => {
       if (prev.find((l) => l.datasetId === datasetId)) return prev;
       if (prev.length >= 8) return prev; // max layers guard
       return [...prev, { datasetId, visible: true, opacity: 1 }];
     });
-  };
+  }, []);
 
-  const removeLayer = (datasetId: string) => {
+  const removeLayer = useCallback((datasetId: string) => {
     setActiveLayers((prev) => prev.filter((l) => l.datasetId !== datasetId));
-  };
+  }, []);
 
-  const toggleLayer = (datasetId: string) => {
+  const toggleLayer = useCallback((datasetId: string) => {
     setActiveLayers((prev) =>
       prev.map((l) => (l.datasetId === datasetId ? { ...l, visible: !l.visible } : l))
     );
-  };
+  }, []);
 
-  const setOpacity = (datasetId: string, opacity: number) => {
+  const setOpacity = useCallback((datasetId: string, opacity: number) => {
     setActiveLayers((prev) =>
       prev.map((l) => (l.datasetId === datasetId ? { ...l, opacity } : l))
     );
-  };
+  }, []);
 
-  const selectDataset = (id: string | null) => setSelectedDatasetId(id);
+  const selectDataset = useCallback((id: string | null) => setSelectedDatasetId(id), []);
+
+  const value = useMemo(() => ({
+    activeLayers, selectedDatasetId, addLayer, removeLayer, toggleLayer, setOpacity, selectDataset, showAlerts, setShowAlerts
+  }), [activeLayers, selectedDatasetId, addLayer, removeLayer, toggleLayer, setOpacity, selectDataset, showAlerts, setShowAlerts]);
 
   return (
-    <MapContext.Provider
-      value={{ activeLayers, selectedDatasetId, addLayer, removeLayer, toggleLayer, setOpacity, selectDataset, showAlerts, setShowAlerts }}
-    >
+    <MapContext.Provider value={value}>
       {children}
     </MapContext.Provider>
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useMap() {
   const ctx = useContext(MapContext);
   if (!ctx) throw new Error('useMap must be used within MapProvider');

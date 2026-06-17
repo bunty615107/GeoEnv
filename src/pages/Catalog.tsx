@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Map, ExternalLink, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
@@ -18,12 +18,14 @@ export default function Catalog() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ layers: true, aspects: false, providers: false });
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState(filters.searchQuery);
+  const [prevSearchQuery, setPrevSearchQuery] = useState(filters.searchQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync search input when filters are reset externally
-  useEffect(() => {
+  // Sync search input when filters are reset externally (avoid effect cascading render)
+  if (filters.searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(filters.searchQuery);
     setSearchInput(filters.searchQuery);
-  }, [filters.searchQuery]);
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);

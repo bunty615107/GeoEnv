@@ -12,7 +12,7 @@ const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 export default function MapPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const { datasets, getLayer } = useCatalog();
+  const { getLayer, getDataset } = useCatalog();
   const { activeLayers, toggleLayer, removeLayer, setOpacity, selectedDatasetId, selectDataset, showAlerts, setShowAlerts } = useMap();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -134,10 +134,10 @@ export default function MapPage() {
 
   const activeDatasets = activeLayers.map((l) => ({
     ...l,
-    dataset: datasets.find((d) => d.id === l.datasetId),
+    dataset: getDataset(l.datasetId),
   }));
 
-  const selectedDs = selectedDatasetId ? datasets.find((d) => d.id === selectedDatasetId) : null;
+  const selectedDs = selectedDatasetId ? getDataset(selectedDatasetId) : null;
 
   return (
     <div className="flex-1 flex relative overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
