@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { AlertTriangle, Clock, MapPin } from 'lucide-react';
 import { loadAlerts, getSeverityColor, formatDate } from '../lib/data';
 import Badge from '../components/ui/Badge';
