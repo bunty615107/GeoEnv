@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react';
 import type { Layer, Aspect, Dataset, Provider, CatalogFilters } from '../types';
 import { loadLayers, loadAspects, loadDatasets, loadProviders } from '../lib/data';
 
@@ -48,30 +48,49 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const setFilters = (partial: Partial<CatalogFilters>) => {
+  const setFilters = useCallback((partial: Partial<CatalogFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
-  };
-  const resetFilters = () => setFiltersState(defaultFilters);
+  }, []);
+  const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
-  const filteredDatasets = datasets.filter((ds) => {
-    if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
-    if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
-    if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase();
-      const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-    return true;
-  });
+  const filteredDatasets = useMemo(() => {
+    return datasets.filter((ds) => {
+      if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
+      if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
+      if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [datasets, filters]);
 
-  const getLayer = (id: string) => layers.find((l) => l.id === id);
-  const getProvider = (id: string) => providers.find((p) => p.id === id);
+  // ⚡ Bolt: Create O(1) lookup maps to prevent O(n) find() during renders
+  const layersById = useMemo(() => {
+    const map = new Map<string, Layer>();
+    layers.forEach(l => map.set(l.id, l));
+    return map;
+  }, [layers]);
+
+  const providersById = useMemo(() => {
+    const map = new Map<string, Provider>();
+    providers.forEach(p => map.set(p.id, p));
+    return map;
+  }, [providers]);
+
+  // ⚡ Bolt: O(1) hash map lookups instead of O(n) array.find()
+  const getLayer = useCallback((id: string) => layersById.get(id), [layersById]);
+  const getProvider = useCallback((id: string) => providersById.get(id), [providersById]);
+
+  // ⚡ Bolt: Memoize the context value to prevent unnecessary re-renders in consumers
+  const value = useMemo(() => ({
+    layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider
+  }), [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]);
 
   return (
-    <CatalogContext.Provider
-      value={{ layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider }}
-    >
+    <CatalogContext.Provider value={value}>
       {children}
     </CatalogContext.Provider>
   );
