@@ -51,24 +51,20 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const setFilters = useCallback((partial: Partial<CatalogFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
   }, []);
-
   const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
-  const filteredDatasets = useMemo(() => {
-    return datasets.filter((ds) => {
-      if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
-      if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
-      if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-      if (filters.searchQuery) {
-        const q = filters.searchQuery.toLowerCase();
-        const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [datasets, filters]);
+  const filteredDatasets = useMemo(() => datasets.filter((ds) => {
+    if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
+    if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
+    if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
+    if (filters.searchQuery) {
+      const q = filters.searchQuery.toLowerCase();
+      const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  }), [datasets, filters]);
 
-  // Optimize lookups: O(1) map lookups instead of O(N) array .find() calls
   const layerMap = useMemo(() => new Map(layers.map(l => [l.id, l])), [layers]);
   const providerMap = useMemo(() => new Map(providers.map(p => [p.id, p])), [providers]);
 
