@@ -1,3 +1,7 @@
+## 2024-05-24 - Init
+## 2024-05-24 - MapLibre GL JS Dynamic Data Updates
+**Learning:** In React implementations using MapLibre GL JS, indiscriminately calling `removeLayer` and `removeSource` inside `useEffect` on state changes causes severe WebGL thrashing, redundant tile requests, and memory leaks from stale event listeners.
+**Action:** Always maintain MapLibre map/source instances and use `map.getSource().setData(geojson)` for dynamic updates. Use empty GeoJSON collections to handle visibility/clear operations if necessary.
 ## 2024-06-12 - Missing Memoization in React Context
 **Learning:** Found an un-memoized expensive calculation (`filteredDatasets`) inside `CatalogContext.tsx`. Context providers run frequently when any state changes, causing all consumers to re-calculate this derived state on every render, which is an O(n) operation per layer/filter update.
 **Action:** Always wrap expensive derived state (like `.filter()`, `.reduce()`, or complex `.map()`) inside `useMemo` when providing it via React Context, especially when dealing with lists of items or configuration options.

@@ -70,7 +70,12 @@ export default function MapPage() {
       })),
     };
 
-    if (!map.getSource(sourceId)) {
+    if (map.getSource(sourceId)) {
+      // Update data if source already exists
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      source.setData(geojson);
+    } else {
+      // Add source and layers if they don't exist
       map.addSource(sourceId, { type: 'geojson', data: geojson });
 
       map.addLayer({
