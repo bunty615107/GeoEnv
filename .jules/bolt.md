@@ -1,3 +1,6 @@
+## 2024-03-20 - MapLibre Dynamic Updates in React Hooks
+**Learning:** Tearing down and recreating MapLibre map layers inside React `useEffect` hooks (e.g. `map.removeLayer`/`map.addLayer` inside a dependency array trigger) causes expensive WebGL thrashing and leads to memory leaks due to repeatedly bound event listeners (`map.on`).
+**Action:** Always maintain source and layer objects if possible. Check if the map source already exists, and if it does, apply dynamic updates using `source.setData()` and manipulate layer state with `map.setLayoutProperty(layerId, 'visibility', 'none' | 'visible')`.
 ## 2024-05-24 - MapLibre Teardown Thrashing
 **Learning:** Tearing down and recreating MapLibre layers and sources on every React render or state change (e.g., using `removeLayer`/`removeSource` then `addSource`/`addLayer`) causes significant WebGL thrashing and leads to memory leaks because event listeners are continuously reattached without cleanup.
 **Action:** Always initialize MapLibre sources and layers once. Use `source.setData()` to update geometries and `map.setLayoutProperty()` to update layer visibility dynamically.
