@@ -1,3 +1,6 @@
+## 2024-05-24 - MapLibre Teardown Thrashing
+**Learning:** Tearing down and recreating MapLibre layers and sources on every React render or state change (e.g., using `removeLayer`/`removeSource` then `addSource`/`addLayer`) causes significant WebGL thrashing and leads to memory leaks because event listeners are continuously reattached without cleanup.
+**Action:** Always initialize MapLibre sources and layers once. Use `source.setData()` to update geometries and `map.setLayoutProperty()` to update layer visibility dynamically.
 ## 2024-05-15 - MapLibre Layers Lifecycle
 **Learning:** Tearing down and rebuilding MapLibre layers and sources using `removeLayer` / `removeSource` and `addLayer` / `addSource` in a `useEffect` dependency array when data changes causes extreme WebGL thrashing and severe memory leaks (due to event listeners being repeatedly reattached without cleanup).
 **Action:** Always initialize MapLibre sources and layers once. Update map data dynamically using `source.setData()` and manipulate layer properties with `map.setLayoutProperty()` for visibility changes.
