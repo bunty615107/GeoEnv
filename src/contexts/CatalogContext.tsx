@@ -53,17 +53,30 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
   const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
-  const filteredDatasets = useMemo(() => datasets.filter((ds) => {
-    if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
-    if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
-    if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase();
-      const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-    return true;
-  }), [datasets, filters]);
+  // ⚡ Bolt: Pre-compute search haystacks to avoid O(n) string concatenations and .toLowerCase() calls during filtering
+  const datasetHaystacks = useMemo(() => {
+    const map = new Map<string, string>();
+    datasets.forEach((ds) => {
+      map.set(ds.id, `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase());
+    });
+    return map;
+  }, [datasets]);
+
+  const filteredDatasets = useMemo(() => {
+    // ⚡ Bolt: Lift .toLowerCase() out of the loop
+    const q = filters.searchQuery ? filters.searchQuery.toLowerCase() : '';
+
+    return datasets.filter((ds) => {
+      if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
+      if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
+      if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
+      if (q) {
+        const haystack = datasetHaystacks.get(ds.id);
+        if (!haystack || !haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [datasets, filters, datasetHaystacks]);
 
   const layerMap = useMemo(() => new Map(layers.map(l => [l.id, l])), [layers]);
   const providerMap = useMemo(() => new Map(providers.map(p => [p.id, p])), [providers]);
