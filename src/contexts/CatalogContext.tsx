@@ -15,6 +15,7 @@ interface CatalogState {
   resetFilters: () => void;
   getLayer: (id: string) => Layer | undefined;
   getProvider: (id: string) => Provider | undefined;
+  getDataset: (id: string) => Dataset | undefined;
 }
 
 const defaultFilters: CatalogFilters = {
@@ -78,6 +79,21 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     });
   }, [datasets, filters, datasetHaystacks]);
 
+  const datasetsById = useMemo(() => {
+    const map = new Map<string, Dataset>();
+    datasets.forEach(d => map.set(d.id, d));
+    return map;
+  }, [datasets]);
+
+  // ⚡ Bolt: O(1) hash map lookups instead of O(n) array.find()
+  const getLayer = useCallback((id: string) => layersById.get(id), [layersById]);
+  const getProvider = useCallback((id: string) => providersById.get(id), [providersById]);
+  const getDataset = useCallback((id: string) => datasetsById.get(id), [datasetsById]);
+
+  // ⚡ Bolt: Memoize the context value to prevent unnecessary re-renders in consumers
+  const value = useMemo(() => ({
+    layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider, getDataset
+  }), [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider, getDataset]);
   const layerMap = useMemo(() => new Map(layers.map(l => [l.id, l])), [layers]);
   const providerMap = useMemo(() => new Map(providers.map(p => [p.id, p])), [providers]);
 
@@ -91,7 +107,6 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useCatalog() {
   const ctx = useContext(CatalogContext);
   if (!ctx) throw new Error('useCatalog must be used within CatalogProvider');

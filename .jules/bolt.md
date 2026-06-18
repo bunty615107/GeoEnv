@@ -32,16 +32,6 @@
 ## 2024-05-19 - MapLibre source updates instead of replacement
 **Learning:** Tearing down and re-adding MapLibre sources and layers (via `removeLayer`/`addLayer`/`removeSource`) in React `useEffect` hooks causes significant WebGL thrashing and potential event listener memory leaks, especially when toggling visibility or updating data frequently.
 **Action:** When updating MapLibre data in React, maintain the source and layers, and exclusively use `source.setData()` with the new GeoJSON data. If visibility needs to be toggled off via data, set the source data to an empty FeatureCollection (`{ type: 'FeatureCollection', features: [] }`).
-## 2024-10-25 - Prevent UI Blocking in Search Filtering
-**Learning:** Managing search input state directly in a heavy list/grid component (like `Catalog.tsx`) forces the entire component to re-render on every keystroke, which causes significant lag. Furthermore, running expensive filtering operations (like `toLowerCase()` and string concatenation) repeatedly inside a filtering loop for a large dataset increases GC pressure and blocks the main thread.
-**Action:** Isolate rapid input states into their own small components (e.g., `DebouncedSearchInput`) so only the input re-renders on keystrokes. Combine this with pre-computed O(1) string/map lookups (e.g., `datasetHaystacks`) and hoisting operations like `.toLowerCase()` outside of the `.filter()` loop to keep filtering lightning-fast and the UI responsive.
-## 2024-10-24 - O(n) to O(1) Context Lookups
-**Learning:** Contexts exposing getters that iterate over arrays using `.find()` inside rendering loops of lists can create massive performance bottlenecks (O(N*M) where N is items rendered and M is length of array being searched). In this codebase, \`getLayer\` and \`getProvider\` were iterating layers and providers arrays for every single dataset rendered in the catalog.
-**Action:** When a context provides lookup functions for list rendering, use `useMemo` to build an ID-based `Map` once, changing the O(N) `.find()` to an O(1) `.get()`.
-## 2024-06-15 - React Context Lookups
-**Learning:** Re-running array `.find()` lookups on each render inside mapped collections (e.g., in lists of items using context methods) introduces O(N*M) complexity, becoming a huge bottleneck on larger datasets (e.g., hundreds of catalog items).
-**Action:** When filtering or mapping large collections in React Contexts, memoize lookup maps (O(1)) with `useMemo` and wrap the getter methods with `useCallback` to prevent expensive re-evaluations and unnecessary component re-renders.
-
-## 2026-06-15 - Redundant network requests optimization
-**Learning:** Loading shared static JSON data from `useEffect` hooks across multiple unmounted pages (`Alerts.tsx`, `MapPage.tsx`, etc) causes redundant network requests because the default `fetch` operation has no app-level cache layer for unmounted components.
-**Action:** Implement an in-memory `Map` in `src/lib/data.ts` to cache the returned Promises. Ensure the cached Promise is deleted on rejection to allow retries, and return `!` (non-null assertion) from the Map getter to strictly type the Promise return.
+## 2024-06-17 - React 19 State Synchronization
+**Learning:** Synchronizing external state (like a context value or prop) with internal state using `useEffect` causes cascading re-renders and violates React's best practices, leading to performance bottlenecks.
+**Action:** If state needs to be derived from props or context, either compute it directly during render without storing it in state, or use a pattern to track the previous prop value and update state synchronously during the render phase to avoid cascading updates.

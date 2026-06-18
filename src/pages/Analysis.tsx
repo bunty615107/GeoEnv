@@ -74,7 +74,7 @@ const mockAnalysisData: Record<string, {
 };
 
 export default function Analysis() {
-  const { datasets } = useCatalog();
+  const { getDataset } = useCatalog();
   const [selectedAoi, setSelectedAoi] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<typeof mockAnalysisData[string] | null>(null);
@@ -196,7 +196,7 @@ export default function Analysis() {
             <h3 className="text-[15px] font-semibold text-text-primary mb-3">Overlapping Datasets</h3>
             <div className="flex flex-wrap gap-2">
               {result.overlappingDatasets.map((dsId) => {
-                const ds = datasets.find((d) => d.id === dsId);
+                const ds = getDataset(dsId);
                 return ds ? (
                   <span key={dsId} className="px-3 py-1.5 rounded-lg bg-surface-alt text-[12px] text-text-primary border border-border">
                     {ds.name}

@@ -17,6 +17,21 @@ export default function Catalog() {
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ layers: true, aspects: false, providers: false });
   const [showFilters, setShowFilters] = useState(false);
+  const [searchInput, setSearchInput] = useState(filters.searchQuery);
+  const [prevSearchQuery, setPrevSearchQuery] = useState(filters.searchQuery);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync search input when filters are reset externally (avoid effect cascading render)
+  if (filters.searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(filters.searchQuery);
+    setSearchInput(filters.searchQuery);
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setFilters({ searchQuery: value }), 250);
+  };
 
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
