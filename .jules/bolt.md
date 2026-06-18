@@ -1,3 +1,6 @@
+## 2024-06-10 - MapLibre GeoJSON Source Updates
+**Learning:** Removing and re-adding MapLibre layers (`removeLayer`, `addLayer`) and sources on state changes causes severe WebGL buffer thrashing and accumulates duplicate event listeners (`map.on`), leading to memory leaks and dropped frames.
+**Action:** Always use `source.setData()` to update map data dynamically instead of tearing down and rebuilding the layer and its listeners.
 ## 2023-10-25 - Prevented Unnecessary Render Cycles in Context
 **Learning:** Found that `CatalogContext` wasn't memoizing its context value, which caused full re-renders for every subscriber (like `Catalog.tsx`, `MapPage.tsx`, `Landing.tsx`) on ANY state update, even minor ones. The `filteredDatasets` calculation was also running on every render instead of just when filters or data changed.
 **Action:** Always memoize Context values with `useMemo` and extract derived state calculations inside `useMemo` when working with React Contexts that handle large datasets or arrays.
