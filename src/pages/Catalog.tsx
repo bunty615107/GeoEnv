@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Map, ExternalLink, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
@@ -17,6 +17,19 @@ export default function Catalog() {
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ layers: true, aspects: false, providers: false });
   const [showFilters, setShowFilters] = useState(false);
+  const [searchInput, setSearchInput] = useState(filters.searchQuery);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync search input when filters are reset externally
+  useEffect(() => {
+    setSearchInput(filters.searchQuery);
+  }, [filters.searchQuery]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setFilters({ searchQuery: value }), 250);
+  };
 
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -56,14 +69,14 @@ export default function Catalog() {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
-              value={filters.searchQuery}
-              onChange={(e) => setFilters({ searchQuery: e.target.value })}
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search datasets…"
               className="w-full pl-9 pr-8 py-2.5 rounded-lg border border-border bg-surface text-[13px] placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 outline-none transition-colors"
               id="catalog-search"
             />
-            {filters.searchQuery && (
-              <button onClick={() => setFilters({ searchQuery: '' })} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-surface-alt cursor-pointer">
+            {searchInput && (
+              <button onClick={() => handleSearchChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-surface-alt cursor-pointer">
                 <X size={13} className="text-text-muted" />
               </button>
             )}
