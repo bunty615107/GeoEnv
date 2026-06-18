@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { Eye, EyeOff, Trash2, Layers, AlertTriangle, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useMap } from '../contexts/MapContext';
@@ -52,7 +51,7 @@ export default function MapPage() {
     loadAlerts().then(setAlerts).catch(console.error);
   }, []);
 
-  // Initialize alert polygons source and layers once
+  // ⚡ Bolt Optimization: Setup layers once to prevent WebGL thrashing and memory leaks from event listeners
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -61,17 +60,28 @@ export default function MapPage() {
     const layerId = 'alerts-fill';
     const outlineId = 'alerts-outline';
 
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] }
-      });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features: (!showAlerts || alerts.length === 0) ? [] : alerts.map((a) => ({
+        type: 'Feature',
+        geometry: a.geometry,
+        properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
+      })),
+    };
+
+    if (map.getSource(sourceId)) {
+      // Update data if source already exists
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      source.setData(geojson);
+    } else {
+      // Add source and layers if they don't exist
+      map.addSource(sourceId, { type: 'geojson', data: geojson });
 
       map.addLayer({
         id: layerId,
         type: 'fill',
         source: sourceId,
-        layout: { visibility: 'none' },
         paint: {
           'fill-color': [
             'match', ['get', 'severity'],
@@ -88,7 +98,6 @@ export default function MapPage() {
         id: outlineId,
         type: 'line',
         source: sourceId,
-        layout: { visibility: 'none' },
         paint: {
           'line-color': [
             'match', ['get', 'severity'],
@@ -101,8 +110,8 @@ export default function MapPage() {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const clickHandler = (e: any) => {
+      // Click handler
+      map.on('click', layerId, (e) => {
         if (e.features && e.features[0]) {
           const props = e.features[0].properties;
           new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
@@ -116,54 +125,19 @@ export default function MapPage() {
             `)
             .addTo(map);
         }
-      };
+      });
 
-      const mouseEnterHandler = () => { map.getCanvas().style.cursor = 'pointer'; };
-      const mouseLeaveHandler = () => { map.getCanvas().style.cursor = ''; };
-
-      // Click handler
-      map.on('click', layerId, clickHandler);
-      map.on('mouseenter', layerId, mouseEnterHandler);
-      map.on('mouseleave', layerId, mouseLeaveHandler);
-
-      // We do not return cleanup function here to remove layer and source
-      // because they are needed for the lifetime of the map
-      // but we should remove event listeners when component unmounts
-      // However the map instance is shared and will be destroyed anyway
-      // So no strict cleanup of layers/sources is needed here.
-    }
-  }, [mapReady]);
-
-  // Update alert polygons data dynamically
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady) return;
-
-    const sourceId = 'alerts-source';
-    const layerId = 'alerts-fill';
-    const outlineId = 'alerts-outline';
-
-    const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
-    if (!source) return;
-
-    // Toggle visibility
-    const visibility = showAlerts && alerts.length > 0 ? 'visible' : 'none';
-    if (map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', visibility);
-    if (map.getLayer(outlineId)) map.setLayoutProperty(outlineId, 'visibility', visibility);
-
-    if (showAlerts && alerts.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const geojson: any = {
-        type: 'FeatureCollection',
-        features: alerts.map((a) => ({
-          type: 'Feature' as const,
-          geometry: a.geometry,
-          properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
-        })),
-      };
-
-      // Update data without rebuilding layer
-      source.setData(geojson);
+      map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+    } else {
+      // ⚡ Bolt Performance Optimization:
+      // Update map data dynamically using source.setData() instead of tearing down
+      // and rebuilding layers/sources. This prevents WebGL thrashing and
+      // event listener memory leaks.
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData(geojson);
+      }
     }
   }, [showAlerts, alerts, mapReady]);
 
