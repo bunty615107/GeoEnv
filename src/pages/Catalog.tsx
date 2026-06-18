@@ -18,14 +18,14 @@ export default function Catalog() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ layers: true, aspects: false, providers: false });
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState(filters.searchQuery);
+  const [prevSearchQuery, setPrevSearchQuery] = useState(filters.searchQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync search input when filters are reset externally
-  // Disable eslint for this specific known pattern or rewrite it
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Sync search input when filters are reset externally (avoid effect cascading render)
+  if (filters.searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(filters.searchQuery);
     setSearchInput(filters.searchQuery);
-  }, [filters.searchQuery]);
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
@@ -36,8 +36,6 @@ export default function Catalog() {
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-
-
 
   const activeFilterCount = filters.layerIds.length + filters.aspectIds.length + filters.providerIds.length + (filters.searchQuery ? 1 : 0);
 
@@ -72,22 +70,10 @@ export default function Catalog() {
       <aside className={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-[280px] lg:w-[300px] border-r border-border bg-white overflow-y-auto shrink-0`}>
         <div className="p-4">
           {/* Search */}
-          <div className="relative mb-4">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search datasets…"
-              className="w-full pl-9 pr-8 py-2.5 rounded-lg border border-border bg-surface text-[13px] placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 outline-none transition-colors"
-              id="catalog-search"
-            />
-            {searchInput && (
-              <button onClick={() => handleSearchChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-surface-alt cursor-pointer">
-                <X size={13} className="text-text-muted" />
-              </button>
-            )}
-          </div>
+          <DebouncedSearchInput
+            initialValue={filters.searchQuery}
+            onSearch={(value) => setFilters({ searchQuery: value })}
+          />
 
           {activeFilterCount > 0 && (
             <button onClick={resetFilters} className="w-full mb-4 py-1.5 rounded-lg text-[12px] text-accent font-medium hover:bg-accent-light transition-colors cursor-pointer">
@@ -191,6 +177,44 @@ export default function Catalog() {
       <Drawer open={!!selectedDataset} onClose={() => setSelectedDataset(null)} title={selectedDataset?.name ?? 'Dataset Details'}>
         {selectedDataset && <DatasetDetail dataset={selectedDataset} onViewOnMap={handleViewOnMap} />}
       </Drawer>
+    </div>
+  );
+}
+
+// ⚡ Bolt: Isolate search input state to prevent the entire Catalog component from re-rendering on every keystroke
+function DebouncedSearchInput({ initialValue, onSearch }: { initialValue: string; onSearch: (v: string) => void }) {
+  const [inputValue, setInputValue] = useState(initialValue);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derive state from props instead of useEffect to avoid the set state warning and extra re-render
+  const [prevInitial, setPrevInitial] = useState(initialValue);
+  if (initialValue !== prevInitial) {
+    setPrevInitial(initialValue);
+    setInputValue(initialValue);
+  }
+
+  const handleChange = (value: string) => {
+    setInputValue(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => onSearch(value), 250);
+  };
+
+  return (
+    <div className="relative mb-4">
+      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+      <input
+        type="text"
+        value={inputValue}
+        onChange={(e) => handleChange(e.target.value)}
+        placeholder="Search datasets…"
+        className="w-full pl-9 pr-8 py-2.5 rounded-lg border border-border bg-surface text-[13px] placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 outline-none transition-colors"
+        id="catalog-search"
+      />
+      {inputValue && (
+        <button onClick={() => handleChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-surface-alt cursor-pointer">
+          <X size={13} className="text-text-muted" />
+        </button>
+      )}
     </div>
   );
 }
