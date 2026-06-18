@@ -76,9 +76,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const getProvider = useCallback((id: string) => providerMap.get(id), [providerMap]);
 
   return (
-    <CatalogContext.Provider
-      value={{ layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider }}
-    >
+    <CatalogContext.Provider value={value}>
       {children}
     </CatalogContext.Provider>
   );
