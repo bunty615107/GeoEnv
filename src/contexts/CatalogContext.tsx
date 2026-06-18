@@ -68,26 +68,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     });
   }, [datasets, filters]);
 
-  const getLayer = useCallback((id: string) => layers.find((l) => l.id === id), [layers]);
-  const getProvider = useCallback((id: string) => providers.find((p) => p.id === id), [providers]);
+  // Optimize lookups: O(1) map lookups instead of O(N) array .find() calls
+  const layerMap = useMemo(() => new Map(layers.map(l => [l.id, l])), [layers]);
+  const providerMap = useMemo(() => new Map(providers.map(p => [p.id, p])), [providers]);
 
-  const value = useMemo(
-    () => ({
-      layers,
-      aspects,
-      datasets,
-      providers,
-      filters,
-      filteredDatasets,
-      loading,
-      error,
-      setFilters,
-      resetFilters,
-      getLayer,
-      getProvider,
-    }),
-    [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]
-  );
+  const getLayer = useCallback((id: string) => layerMap.get(id), [layerMap]);
+  const getProvider = useCallback((id: string) => providerMap.get(id), [providerMap]);
 
   return (
     <CatalogContext.Provider value={value}>
