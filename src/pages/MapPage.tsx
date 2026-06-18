@@ -129,15 +129,6 @@ export default function MapPage() {
 
       map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-    } else {
-      // ⚡ Bolt Performance Optimization:
-      // Update map data dynamically using source.setData() instead of tearing down
-      // and rebuilding layers/sources. This prevents WebGL thrashing and
-      // event listener memory leaks.
-      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
-      if (source) {
-        source.setData(geojson);
-      }
     }
   }, [showAlerts, alerts, mapReady]);
 
