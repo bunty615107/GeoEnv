@@ -1,3 +1,6 @@
+## 2024-05-24 - MapLibre WebGL Thrashing Anti-pattern
+**Learning:** Tearing down and rebuilding layers/sources on every render/state change causes WebGL thrashing and event listener memory leaks.
+**Action:** Always use `source.setData()` to update map data dynamically instead of `removeLayer`/`addLayer`.
 ## 2024-05-24 - MapLibre React Integration Memory Leaks
 **Learning:** Tearing down and rebuilding layers/sources (e.g., `removeLayer`/`addLayer`) within React `useEffect` loops based on state changes causes WebGL thrashing and severe memory leaks due to repeatedly binding new event listeners (`map.on()`) without cleaning them up.
 **Action:** When using MapLibre in React, define sources, layers, and event handlers exactly once on map load. Use `source.setData()` to update geometries and `map.setLayoutProperty(id, 'visibility', 'none'/'visible')` to toggle visibility in response to state changes.

@@ -60,11 +60,19 @@ export default function MapPage() {
     const layerId = 'alerts-fill';
     const outlineId = 'alerts-outline';
 
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features: (!showAlerts || alerts.length === 0) ? [] : alerts.map((a) => ({
+        type: 'Feature',
+        geometry: a.geometry,
+        properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
+      })),
+    };
 
-    if (!map.getLayer(layerId)) {
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, { type: 'geojson', data: geojson });
+
       map.addLayer({
         id: layerId,
         type: 'fill',
@@ -81,7 +89,23 @@ export default function MapPage() {
         },
       });
 
-      // Attach event handlers only once
+      map.addLayer({
+        id: outlineId,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': [
+            'match', ['get', 'severity'],
+            'critical', '#ef4444',
+            'severe', '#f97316',
+            'moderate', '#f59e0b',
+            '#3b82f6',
+          ],
+          'line-width': 2,
+        },
+      });
+
+      // Click handler
       map.on('click', layerId, (e) => {
         if (e.features && e.features[0]) {
           const props = e.features[0].properties;
@@ -100,55 +124,15 @@ export default function MapPage() {
 
       map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-    }
-
-    if (!map.getLayer(outlineId)) {
-      map.addLayer({
-        id: outlineId,
-        type: 'line',
-        source: sourceId,
-        paint: {
-          'line-color': [
-            'match', ['get', 'severity'],
-            'critical', '#ef4444',
-            'severe', '#f97316',
-            'moderate', '#f59e0b',
-            '#3b82f6',
-          ],
-          'line-width': 2,
-        },
-      });
-    }
-  }, [mapReady]);
-
-  // ⚡ Bolt Optimization: Update map data via source.setData() and toggle visibility via layout properties
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady) return;
-
-    const sourceId = 'alerts-source';
-    const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
-
-    if (source) {
-      const geojson = {
-        type: 'FeatureCollection' as const,
-        features: alerts.map((a) => ({
-          type: 'Feature' as const,
-          geometry: a.geometry,
-          properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
-        })),
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      source.setData(geojson as any);
-    }
-
-    const visibility = showAlerts ? 'visible' : 'none';
-    if (map.getLayer('alerts-fill')) {
-      map.setLayoutProperty('alerts-fill', 'visibility', visibility);
-    }
-    if (map.getLayer('alerts-outline')) {
-      map.setLayoutProperty('alerts-outline', 'visibility', visibility);
+    } else {
+      // ⚡ Bolt Performance Optimization:
+      // Update map data dynamically using source.setData() instead of tearing down
+      // and rebuilding layers/sources. This prevents WebGL thrashing and
+      // event listener memory leaks.
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData(geojson);
+      }
     }
   }, [showAlerts, alerts, mapReady]);
 
