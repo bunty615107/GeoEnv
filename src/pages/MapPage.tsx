@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { Eye, EyeOff, Trash2, Layers, AlertTriangle, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useMap } from '../contexts/MapContext';
@@ -52,7 +51,7 @@ export default function MapPage() {
     loadAlerts().then(setAlerts).catch(console.error);
   }, []);
 
-  // Render alert polygons
+  // ⚡ Bolt Optimization: Setup layers once to prevent WebGL thrashing and memory leaks from event listeners
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;

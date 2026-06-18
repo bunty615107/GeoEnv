@@ -5,6 +5,7 @@ import { MapProvider } from './contexts/MapContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoadingSpinner from './components/ui/LoadingSpinner';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import Landing from './pages/Landing';
 
 // Lazy-loaded heavy routes
@@ -21,6 +22,7 @@ export default function App() {
         <MapProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <ErrorBoundary>
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/" element={<Landing />} />
@@ -31,6 +33,7 @@ export default function App() {
                 <Route path="/about" element={<About />} />
               </Routes>
             </Suspense>
+            </ErrorBoundary>
             <Routes>
               {/* No footer on map page (full-height) */}
               <Route path="/map" element={null} />
