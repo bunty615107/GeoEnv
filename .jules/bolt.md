@@ -1,3 +1,9 @@
+## 2024-06-17 - React Memoization for Large Lists
+**Learning:** In applications like catalogs or lists with hundreds of items, when a parent component manages state such as `selectedItem` that frequently changes based on user interaction (like clicking a card), leaving inline rendering of these list items will force O(N) re-renders, causing significant jank on lower-end devices.
+**Action:** Always extract list items into a separate component and wrap them with `React.memo`, being careful to memoize (using `useCallback`) any handler functions passed as props to maintain pure component behavior.
+## 2024-06-17 - React Memoization for Large Lists
+**Learning:** In applications like catalogs or lists with hundreds of items, when a parent component manages state such as `selectedItem` that frequently changes based on user interaction (like clicking a card), leaving inline rendering of these list items will force O(N) re-renders, causing significant jank on lower-end devices.
+**Action:** Always extract list items into a separate component and wrap them with `React.memo`, being careful to memoize (using `useCallback`) any handler functions passed as props to maintain pure component behavior.
 ## 2024-03-20 - MapLibre Dynamic Updates in React Hooks
 **Learning:** Tearing down and recreating MapLibre map layers inside React `useEffect` hooks (e.g. `map.removeLayer`/`map.addLayer` inside a dependency array trigger) causes expensive WebGL thrashing and leads to memory leaks due to repeatedly bound event listeners (`map.on`).
 **Action:** Always maintain source and layer objects if possible. Check if the map source already exists, and if it does, apply dynamic updates using `source.setData()` and manipulate layer state with `map.setLayoutProperty(layerId, 'visibility', 'none' | 'visible')`.
