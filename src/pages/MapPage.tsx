@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { Eye, EyeOff, Trash2, Layers, AlertTriangle, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useMap } from '../contexts/MapContext';
@@ -52,7 +51,7 @@ export default function MapPage() {
     loadAlerts().then(setAlerts).catch(console.error);
   }, []);
 
-  // Render alert polygons
+  // ⚡ Bolt Optimization: Setup layers once to prevent WebGL thrashing and memory leaks from event listeners
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -71,67 +70,75 @@ export default function MapPage() {
       })),
     };
 
-    const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
-
-    // Use setData instead of tear-down/rebuild to prevent WebGL thrashing and listener leaks
-    if (source) {
+    if (map.getSource(sourceId)) {
+      // Update data if source already exists
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
       source.setData(geojson);
-      return;
-    }
+    } else {
+      // Add source and layers if they don't exist
+      map.addSource(sourceId, { type: 'geojson', data: geojson });
 
-    map.addSource(sourceId, { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: layerId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': [
+            'match', ['get', 'severity'],
+            'critical', '#ef4444',
+            'severe', '#f97316',
+            'moderate', '#f59e0b',
+            '#3b82f6',
+          ],
+          'fill-opacity': 0.2,
+        },
+      });
 
-    map.addLayer({
-      id: layerId,
-      type: 'fill',
-      source: sourceId,
-      paint: {
-        'fill-color': [
-          'match', ['get', 'severity'],
-          'critical', '#ef4444',
-          'severe', '#f97316',
-          'moderate', '#f59e0b',
-          '#3b82f6',
-        ],
-        'fill-opacity': 0.2,
-      },
-    });
+      map.addLayer({
+        id: outlineId,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': [
+            'match', ['get', 'severity'],
+            'critical', '#ef4444',
+            'severe', '#f97316',
+            'moderate', '#f59e0b',
+            '#3b82f6',
+          ],
+          'line-width': 2,
+        },
+      });
 
-    map.addLayer({
-      id: outlineId,
-      type: 'line',
-      source: sourceId,
-      paint: {
-        'line-color': [
-          'match', ['get', 'severity'],
-          'critical', '#ef4444',
-          'severe', '#f97316',
-          'moderate', '#f59e0b',
-          '#3b82f6',
-        ],
-        'line-width': 2,
-      },
-    });
+      // Click handler
+      map.on('click', layerId, (e) => {
+        if (e.features && e.features[0]) {
+          const props = e.features[0].properties;
+          new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div style="font-family: Inter, sans-serif;">
+                <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${props?.title ?? 'Alert'}</div>
+                <div style="font-size:11px;color:#64748b;">Type: ${props?.type ?? '—'}</div>
+                <div style="font-size:11px;color:#64748b;">Severity: ${props?.severity ?? '—'}</div>
+              </div>
+            `)
+            .addTo(map);
+        }
+      });
 
-    // Click handler
-    map.on('click', layerId, (e) => {
-      if (e.features && e.features[0]) {
-        const props = e.features[0].properties;
-        new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <div style="font-family: Inter, sans-serif;">
-              <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${props?.title ?? 'Alert'}</div>
-              <div style="font-size:11px;color:#64748b;">Type: ${props?.type ?? '—'}</div>
-              <div style="font-size:11px;color:#64748b;">Severity: ${props?.severity ?? '—'}</div>
-            </div>
-          `)
-          .addTo(map);
+      map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+    } else {
+      // ⚡ Bolt Performance Optimization:
+      // Update map data dynamically using source.setData() instead of tearing down
+      // and rebuilding layers/sources. This prevents WebGL thrashing and
+      // event listener memory leaks.
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData(geojson);
       }
-    });
-
-    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+    }
   }, [showAlerts, alerts, mapReady]);
 
   const activeDatasets = activeLayers.map((l) => ({

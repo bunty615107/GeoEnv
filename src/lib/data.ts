@@ -2,10 +2,25 @@ import type { Layer, Aspect, Dataset, Provider, Alert } from '../types';
 
 const BASE = import.meta.env.BASE_URL ?? './';
 
+// Cache promises to prevent duplicate fetches across pages
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fetchCache = new Map<string, Promise<any>>();
+
 async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}data/${path}`);
-  if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
-  return res.json();
+  if (!fetchCache.has(path)) {
+    const promise = fetch(`${BASE}data/${path}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
+        return res.json();
+      })
+      .catch((err) => {
+        // Remove from cache on failure to allow retries
+        fetchCache.delete(path);
+        throw err;
+      });
+    fetchCache.set(path, promise);
+  }
+  return fetchCache.get(path)!;
 }
 
 export const loadLayers = () => fetchJson<Layer[]>('layers.json');
