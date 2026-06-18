@@ -14,6 +14,7 @@ export default function Alerts() {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const miniMapContainer = useRef<HTMLDivElement>(null);
   const miniMapRef = useRef<maplibregl.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     loadAlerts()
@@ -22,59 +23,21 @@ export default function Alerts() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Mini-map for selected alert
+  // Mini-map initialization
   useEffect(() => {
-    if (!miniMapContainer.current) return;
-
-    if (miniMapRef.current) {
-      miniMapRef.current.remove();
-      miniMapRef.current = null;
-    }
-
-    if (!selectedAlert) return;
+    if (!miniMapContainer.current || miniMapRef.current) return;
 
     const map = new maplibregl.Map({
       container: miniMapContainer.current,
       style: MAP_STYLE,
-      center: getCentroid(selectedAlert.geometry.coordinates[0]),
-      zoom: 6,
+      center: [0, 0],
+      zoom: 1,
       interactive: true,
       attributionControl: false,
     });
 
     map.on('load', () => {
-      const sc = getSeverityColor(selectedAlert.severity);
-
-      map.addSource('alert-area', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: selectedAlert.geometry,
-          properties: {},
-        },
-      });
-
-      map.addLayer({
-        id: 'alert-fill',
-        type: 'fill',
-        source: 'alert-area',
-        paint: { 'fill-color': sc.text, 'fill-opacity': 0.2 },
-      });
-
-      map.addLayer({
-        id: 'alert-outline',
-        type: 'line',
-        source: 'alert-area',
-        paint: { 'line-color': sc.text, 'line-width': 2.5 },
-      });
-
-      // Fit bounds
-      const coords = selectedAlert.geometry.coordinates[0];
-      const bounds = coords.reduce(
-        (b, c) => b.extend(c as [number, number]),
-        new maplibregl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number])
-      );
-      map.fitBounds(bounds, { padding: 40 });
+      setMapReady(true);
     });
 
     miniMapRef.current = map;
@@ -83,7 +46,59 @@ export default function Alerts() {
       map.remove();
       miniMapRef.current = null;
     };
-  }, [selectedAlert]);
+  }, []);
+
+  // Mini-map update for selected alert
+  useEffect(() => {
+    const map = miniMapRef.current;
+    if (!map || !mapReady || !selectedAlert) return;
+
+    const sc = getSeverityColor(selectedAlert.severity);
+    const sourceId = 'alert-area';
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: selectedAlert.geometry,
+          properties: {},
+        },
+      ],
+    };
+
+    if (map.getSource(sourceId)) {
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      source.setData(geojson);
+      map.setPaintProperty('alert-fill', 'fill-color', sc.text);
+      map.setPaintProperty('alert-outline', 'line-color', sc.text);
+    } else {
+      map.addSource(sourceId, { type: 'geojson', data: geojson });
+
+      map.addLayer({
+        id: 'alert-fill',
+        type: 'fill',
+        source: sourceId,
+        paint: { 'fill-color': sc.text, 'fill-opacity': 0.2 },
+      });
+
+      map.addLayer({
+        id: 'alert-outline',
+        type: 'line',
+        source: sourceId,
+        paint: { 'line-color': sc.text, 'line-width': 2.5 },
+      });
+    }
+
+    // Fit bounds
+    const coords = selectedAlert.geometry.coordinates[0];
+    const bounds = coords.reduce(
+      (b, c) => b.extend(c as [number, number]),
+      new maplibregl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number])
+    );
+    map.fitBounds(bounds, { padding: 40 });
+  }, [selectedAlert, mapReady]);
 
   if (loading) return <LoadingSpinner text="Loading alerts…" />;
 
@@ -183,8 +198,3 @@ function MetaField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getCentroid(coords: number[][]): [number, number] {
-  let x = 0, y = 0;
-  for (const c of coords) { x += c[0]; y += c[1]; }
-  return [x / coords.length, y / coords.length];
-}

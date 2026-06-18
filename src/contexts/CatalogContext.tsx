@@ -78,27 +78,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     });
   }, [datasets, filters, datasetHaystacks]);
 
-  // ⚡ Bolt: Create O(1) lookup maps to prevent O(n) find() during renders
-  const layersById = useMemo(() => {
-    const map = new Map<string, Layer>();
-    layers.forEach(l => map.set(l.id, l));
-    return map;
-  }, [layers]);
+  const layerMap = useMemo(() => new Map(layers.map(l => [l.id, l])), [layers]);
+  const providerMap = useMemo(() => new Map(providers.map(p => [p.id, p])), [providers]);
 
-  const providersById = useMemo(() => {
-    const map = new Map<string, Provider>();
-    providers.forEach(p => map.set(p.id, p));
-    return map;
-  }, [providers]);
-
-  // ⚡ Bolt: O(1) hash map lookups instead of O(n) array.find()
-  const getLayer = useCallback((id: string) => layersById.get(id), [layersById]);
-  const getProvider = useCallback((id: string) => providersById.get(id), [providersById]);
-
-  // ⚡ Bolt: Memoize the context value to prevent unnecessary re-renders in consumers
-  const value = useMemo(() => ({
-    layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider
-  }), [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]);
+  const getLayer = useCallback((id: string) => layerMap.get(id), [layerMap]);
+  const getProvider = useCallback((id: string) => providerMap.get(id), [providerMap]);
 
   return (
     <CatalogContext.Provider value={value}>
