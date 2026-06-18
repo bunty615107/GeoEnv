@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { Eye, EyeOff, Trash2, Layers, AlertTriangle, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useMap } from '../contexts/MapContext';
@@ -52,7 +51,7 @@ export default function MapPage() {
     loadAlerts().then(setAlerts).catch(console.error);
   }, []);
 
-  // Render alert polygons
+  // ⚡ Bolt Optimization: Setup layers once to prevent WebGL thrashing and memory leaks from event listeners
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -64,32 +63,25 @@ export default function MapPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const geojson: any = {
       type: 'FeatureCollection',
-      features: alerts.map((a) => ({
+      features: (!showAlerts || alerts.length === 0) ? [] : alerts.map((a) => ({
         type: 'Feature',
         geometry: a.geometry,
         properties: { id: a.id, title: a.title, severity: a.severity, type: a.type },
       })),
     };
 
-    const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
-    const visibility = showAlerts && alerts.length > 0 ? 'visible' : 'none';
-
-    if (source) {
-      // ⚡ Bolt Optimization: Update existing source data instead of removing/re-adding layer
-      // This prevents expensive WebGL thrashing and event listener memory leaks
+    if (map.getSource(sourceId)) {
+      // Update data if source already exists
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
       source.setData(geojson);
-
-      if (map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', visibility);
-      if (map.getLayer(outlineId)) map.setLayoutProperty(outlineId, 'visibility', visibility);
     } else {
-      // Initial setup
+      // Add source and layers if they don't exist
       map.addSource(sourceId, { type: 'geojson', data: geojson });
 
       map.addLayer({
         id: layerId,
         type: 'fill',
         source: sourceId,
-        layout: { visibility },
         paint: {
           'fill-color': [
             'match', ['get', 'severity'],
@@ -106,7 +98,6 @@ export default function MapPage() {
         id: outlineId,
         type: 'line',
         source: sourceId,
-        layout: { visibility },
         paint: {
           'line-color': [
             'match', ['get', 'severity'],
@@ -119,7 +110,7 @@ export default function MapPage() {
         },
       });
 
-      // Click handler (only added once)
+      // Click handler
       map.on('click', layerId, (e) => {
         if (e.features && e.features[0]) {
           const props = e.features[0].properties;
@@ -138,6 +129,15 @@ export default function MapPage() {
 
       map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+    } else {
+      // ⚡ Bolt Performance Optimization:
+      // Update map data dynamically using source.setData() instead of tearing down
+      // and rebuilding layers/sources. This prevents WebGL thrashing and
+      // event listener memory leaks.
+      const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData(geojson);
+      }
     }
   }, [showAlerts, alerts, mapReady]);
 
