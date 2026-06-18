@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react';
 import type { Layer, Aspect, Dataset, Provider, CatalogFilters } from '../types';
 import { loadLayers, loadAspects, loadDatasets, loadProviders } from '../lib/data';
 
@@ -48,10 +48,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const setFilters = (partial: Partial<CatalogFilters>) => {
+  const setFilters = useCallback((partial: Partial<CatalogFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
-  };
-  const resetFilters = () => setFiltersState(defaultFilters);
+  }, []);
+
+  const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
   const filteredDatasets = useMemo(() => {
     return datasets.filter((ds) => {
@@ -67,13 +68,29 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     });
   }, [datasets, filters]);
 
-  const getLayer = (id: string) => layers.find((l) => l.id === id);
-  const getProvider = (id: string) => providers.find((p) => p.id === id);
+  const getLayer = useCallback((id: string) => layers.find((l) => l.id === id), [layers]);
+  const getProvider = useCallback((id: string) => providers.find((p) => p.id === id), [providers]);
+
+  const value = useMemo(
+    () => ({
+      layers,
+      aspects,
+      datasets,
+      providers,
+      filters,
+      filteredDatasets,
+      loading,
+      error,
+      setFilters,
+      resetFilters,
+      getLayer,
+      getProvider,
+    }),
+    [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]
+  );
 
   return (
-    <CatalogContext.Provider
-      value={{ layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider }}
-    >
+    <CatalogContext.Provider value={value}>
       {children}
     </CatalogContext.Provider>
   );
