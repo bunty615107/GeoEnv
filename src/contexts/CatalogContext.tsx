@@ -55,12 +55,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
   const filteredDatasets = useMemo(() => {
-    const q = filters.searchQuery ? filters.searchQuery.toLowerCase() : '';
     return datasets.filter((ds) => {
       if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
       if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
       if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-      if (q) {
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
         const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }

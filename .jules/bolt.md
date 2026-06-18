@@ -1,3 +1,6 @@
+## 2024-06-12 - Missing Memoization in React Context
+**Learning:** Found an un-memoized expensive calculation (`filteredDatasets`) inside `CatalogContext.tsx`. Context providers run frequently when any state changes, causing all consumers to re-calculate this derived state on every render, which is an O(n) operation per layer/filter update.
+**Action:** Always wrap expensive derived state (like `.filter()`, `.reduce()`, or complex `.map()`) inside `useMemo` when providing it via React Context, especially when dealing with lists of items or configuration options.
 ## 2024-05-24 - MapLibre WebGL Thrashing Anti-pattern
 **Learning:** Tearing down and rebuilding layers/sources on every render/state change causes WebGL thrashing and event listener memory leaks.
 **Action:** Always use `source.setData()` to update map data dynamically instead of `removeLayer`/`addLayer`.
