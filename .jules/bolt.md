@@ -1,3 +1,6 @@
+## 2024-05-24 - MapLibre React Integration Memory Leaks
+**Learning:** Tearing down and rebuilding layers/sources (e.g., `removeLayer`/`addLayer`) within React `useEffect` loops based on state changes causes WebGL thrashing and severe memory leaks due to repeatedly binding new event listeners (`map.on()`) without cleaning them up.
+**Action:** When using MapLibre in React, define sources, layers, and event handlers exactly once on map load. Use `source.setData()` to update geometries and `map.setLayoutProperty(id, 'visibility', 'none'/'visible')` to toggle visibility in response to state changes.
 ## 2024-06-10 - MapLibre GeoJSON Source Updates
 **Learning:** Removing and re-adding MapLibre layers (`removeLayer`, `addLayer`) and sources on state changes causes severe WebGL buffer thrashing and accumulates duplicate event listeners (`map.on`), leading to memory leaks and dropped frames.
 **Action:** Always use `source.setData()` to update map data dynamically instead of tearing down and rebuilding the layer and its listeners.
