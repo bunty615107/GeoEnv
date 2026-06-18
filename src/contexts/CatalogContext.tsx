@@ -51,15 +51,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const setFilters = useCallback((partial: Partial<CatalogFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
   }, []);
+
   const resetFilters = useCallback(() => setFiltersState(defaultFilters), []);
 
   const filteredDatasets = useMemo(() => {
+    const q = filters.searchQuery ? filters.searchQuery.toLowerCase() : '';
     return datasets.filter((ds) => {
       if (filters.layerIds.length > 0 && !filters.layerIds.includes(ds.layerId)) return false;
       if (filters.aspectIds.length > 0 && !filters.aspectIds.some((a) => ds.aspects.includes(a))) return false;
       if (filters.providerIds.length > 0 && !filters.providerIds.includes(ds.providerId)) return false;
-      if (filters.searchQuery) {
-        const q = filters.searchQuery.toLowerCase();
+      if (q) {
         const haystack = `${ds.name} ${ds.description} ${ds.tags.join(' ')}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
@@ -67,27 +68,26 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     });
   }, [datasets, filters]);
 
-  // ⚡ Bolt: Create O(1) lookup maps to prevent O(n) find() during renders
-  const layersById = useMemo(() => {
-    const map = new Map<string, Layer>();
-    layers.forEach(l => map.set(l.id, l));
-    return map;
-  }, [layers]);
+  const getLayer = useCallback((id: string) => layers.find((l) => l.id === id), [layers]);
+  const getProvider = useCallback((id: string) => providers.find((p) => p.id === id), [providers]);
 
-  const providersById = useMemo(() => {
-    const map = new Map<string, Provider>();
-    providers.forEach(p => map.set(p.id, p));
-    return map;
-  }, [providers]);
-
-  // ⚡ Bolt: O(1) hash map lookups instead of O(n) array.find()
-  const getLayer = useCallback((id: string) => layersById.get(id), [layersById]);
-  const getProvider = useCallback((id: string) => providersById.get(id), [providersById]);
-
-  // ⚡ Bolt: Memoize the context value to prevent unnecessary re-renders in consumers
-  const value = useMemo(() => ({
-    layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider
-  }), [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]);
+  const value = useMemo(
+    () => ({
+      layers,
+      aspects,
+      datasets,
+      providers,
+      filters,
+      filteredDatasets,
+      loading,
+      error,
+      setFilters,
+      resetFilters,
+      getLayer,
+      getProvider,
+    }),
+    [layers, aspects, datasets, providers, filters, filteredDatasets, loading, error, setFilters, resetFilters, getLayer, getProvider]
+  );
 
   return (
     <CatalogContext.Provider value={value}>
