@@ -1,0 +1,61 @@
+name: Issue and PR Bot
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  welcome-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Handle new issue or PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const eventName = context.eventName;
+
+            if (eventName === 'issues') {
+              const issueBody = context.payload.issue.body || '';
+              const bodyLower = issueBody.toLowerCase();
+
+              const hasBrowser = bodyLower.includes('browser');
+              const hasOs = bodyLower.includes('os');
+              const hasVersion = bodyLower.includes('version');
+
+              let commentBody = 'Thank you for opening this issue!\n\n';
+
+              if (!hasBrowser || !hasOs || !hasVersion) {
+                commentBody += 'To help us investigate effectively, please ensure you have provided your **Browser**, **OS**, and **App version** if they are relevant to this issue.\n\n';
+              }
+
+              commentBody += `We aim to respond to all issues within 48 hours. In the meantime, please check our [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) guidelines.`;
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['needs-triage']
+              });
+            } else if (eventName === 'pull_request') {
+              const commentBody = `Thank you for opening this pull request!\n\nAs a reminder, please ensure you have completed the PR checklist before requesting a review. Refer to our [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) for more details.`;
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+            }
