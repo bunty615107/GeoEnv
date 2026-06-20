@@ -1,0 +1,60 @@
+name: Issue and PR Bot
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  welcome-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Welcome Comment and Triage
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (context.eventName === 'issues') {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['needs-triage']
+              });
+
+              const body = `Thank you for reporting this issue!
+
+To help us resolve it faster, please ensure you've provided:
+- Browser and version
+- Operating System
+- App version (if applicable)
+
+We aim to respond within 48 hours. Please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) for more details.`;
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            } else if (context.eventName === 'pull_request') {
+              const body = `Thank you for your pull request!
+
+As a quick reminder, please ensure your PR meets the following checklist:
+- [ ] Code follows our style guidelines
+- [ ] Tests are included or updated (if applicable)
+- [ ] Documentation is updated
+
+A maintainer will review your changes soon.`;
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
