@@ -1,0 +1,63 @@
+name: Scheduled Release
+
+on:
+  schedule:
+    - cron: '0 9 1,15 * *'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for new commits and tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Check if there are new commits since the latest tag
+          # git describe --tags will output exactly the tag name if the current commit is tagged
+          # otherwise it outputs <tag>-<num_commits>-g<hash>
+          CURRENT_DESC=$(git describe --tags 2>/dev/null || echo "v0.0.0")
+
+          if [ "$LATEST_TAG" = "$CURRENT_DESC" ] && [ "$LATEST_TAG" != "v0.0.0" ]; then
+            echo "No new commits since last tag ($LATEST_TAG). Skipping gracefully."
+            exit 0
+          fi
+
+          echo "New commits found since last tag ($LATEST_TAG)."
+
+          # Strip 'v' prefix if it exists
+          VERSION=${LATEST_TAG#v}
+
+          # Parse version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          # Set defaults if parsing fails
+          MAJOR=${MAJOR:-0}
+          MINOR=${MINOR:-0}
+          PATCH=${PATCH:-0}
+
+          # Remove any pre-release suffixes from patch
+          PATCH_NUM=$(echo "$PATCH" | sed -e 's/[^0-9].*$//')
+
+          # Increment patch
+          NEW_PATCH=$((PATCH_NUM + 1))
+          NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+
+          echo "Creating new tag: $NEW_TAG"
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
