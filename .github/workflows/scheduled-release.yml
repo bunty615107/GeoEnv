@@ -32,7 +32,8 @@ jobs:
           DESCRIBE_OUT=$(git describe --tags 2>/dev/null || echo "v0.0.0-new")
 
           if [ "$DESCRIBE_OUT" = "$LATEST_TAG" ] && [ "$LATEST_TAG" != "v0.0.0" ]; then
-            echo "No new commits since $LATEST_TAG. Skipping."
+            echo "No new commits since $LATEST_TAG. Skipping gracefully."
+            exit 0
           else
             echo "New commits found since $LATEST_TAG."
 
