@@ -1,0 +1,72 @@
+name: Issue and PR Bot
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  issue-bot:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+      - name: Handle new issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueBody = context.payload.issue.body || '';
+            const missingDetails = [];
+
+            if (!issueBody.toLowerCase().includes('browser')) missingDetails.push('browser');
+            if (!issueBody.toLowerCase().includes('os') && !issueBody.toLowerCase().includes('operating system')) missingDetails.push('OS');
+            if (!issueBody.toLowerCase().includes('version') && !issueBody.toLowerCase().includes('app version')) missingDetails.push('app version');
+
+            let commentBody = `Thanks for opening this issue! 👋\n\n`;
+            if (missingDetails.length > 0) {
+              commentBody += `To help us investigate, could you please provide your ${missingDetails.join(', ')} if you haven't already?\n\n`;
+            }
+            commentBody += `We aim to respond to all new issues within 48 hours.\n\n`;
+            commentBody += `Please check out our [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md) for more details on how to contribute.\n`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['needs-triage']
+            });
+
+  pr-bot:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    steps:
+      - name: Handle new PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commentBody = `Thanks for your Pull Request! 🎉\n\n` +
+              `Before we review, please make sure you have:\n` +
+              `- [ ] Run all tests and verified that they pass\n` +
+              `- [ ] Updated relevant documentation\n` +
+              `- [ ] Followed the guidelines in [CONTRIBUTING.md](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)\n\n` +
+              `A maintainer will review your PR soon.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
